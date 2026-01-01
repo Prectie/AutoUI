@@ -1,0 +1,33 @@
+[tool.pytest.ini_options]
+testpaths = ["Tests"]
+python_files = ["test_*.py"]
+pythonpath = ["."]
+
+addopts = [
+    "--import-mode=importlib",  # 导入测试模块完全不改动 sys.path
+    "-vs",  # 详细输出 + 保留 print
+    "-vv",  # 再次提升输出详细度
+    "--reruns=0",  # 失败重跑次数
+    "--reruns-delay=0.5",  # 失败重跑间隔(s)
+    "-n=1",  # xdist并发进程数
+    "--dist=loadscope",  # 并发调度策略：按模块/类分发
+    "--image-snapshot-save-diff",  # 视觉回归, 保存差异图
+    "-s",
+]
+
+markers = [
+    "no_pre: 跳过前置操作",
+    "no_post: 跳过后置操作",
+]
+
+video_keep_days=1
+video_lead_seconds=1
+video_tail_seconds=2
+
+# 环境配置
+env = "test"
+env_urls = [
+    "test=http://192.168.1.141:8088/login.html",
+    "prod=http://192.168.1.6:1806/login.html"
+]
+

@@ -1,0 +1,6 @@
+common_admin_account:
+  - username: "hty"
+    password: "123"
+---
+demo_e:
+  - tree_node: "测试分类"

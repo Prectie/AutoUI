@@ -1,0 +1,15 @@
+playwright
+pyaml
+allure-pytest
+pytest-playwright
+pytest
+nb_log
+selenium
+pytest-rerunfailures
+pytest-xdist
+pytest-dependency
+pytest-image-snapshot
+pillow
+pytest-order
+pixelmatch
+pyinstaller
