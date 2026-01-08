@@ -13,3 +13,4 @@ pillow
 pytest-order
 pixelmatch
 pyinstaller
+requests
