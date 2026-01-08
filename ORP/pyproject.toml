@@ -18,6 +18,7 @@ addopts = [
 markers = [
     "no_pre: 跳过前置操作",
     "no_post: 跳过后置操作",
+    "api: 接口自动化用例",
 ]
 
 video_keep_days=1
@@ -30,4 +31,3 @@ env_urls = [
     "test=http://192.168.1.141:8088/login.html",
     "prod=http://192.168.1.6:1806/login.html"
 ]
-
