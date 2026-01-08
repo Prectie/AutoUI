@@ -1,0 +1,35 @@
+{
+  "name": "ds-autotest",
+  "version": "1.0.0",
+  "description": "推演自动测试项目 对一系列预置任务，执行推演，并给出执行结果",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "start": "npx tsc && node dist/index.js",
+    "dev": "nodemon",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "ZHENGYONG",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.8.9",
+    "ds-entities": "^1.0.24",
+    "nodemon": "^3.0.1",
+    "path": "^0.12.7",
+    "ts-loader": "^9.5.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "config": {
+    "testDir": "D:/OPM/模型/模型验证"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  }
+}
