@@ -1,0 +1,3 @@
+2026-03-18 23:59:07 - default - "D:\GitHubRepository\WebUI-\ORP\Fixtures\video_fixtures.py:257" - video_run_dirs - INFO - [video] keep_days=1
+2026-03-18 23:59:07 - default - "D:\GitHubRepository\WebUI-\ORP\Fixtures\video_fixtures.py:271" - video_run_dirs - INFO - [video] 运行根目录: D:\GitHubRepository\WebUI-\ORP\record_video\2026-03-18\23-59-07
+2026-03-18 23:59:08 - default - "D:\GitHubRepository\WebUI-\ORP\Fixtures\video_fixtures.py:167" - pytest_runtest_makereport - INFO - [allure] record_video_path not found, skip attach

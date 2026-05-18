@@ -1,0 +1,5 @@
+scenario_name:
+  - unknown_air_situation: "不明空情处置"
+---
+operation:
+  - delete: "删除任务"
