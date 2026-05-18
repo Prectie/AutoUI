@@ -17,6 +17,7 @@ def run_tests():
     test_demo_dir = 'Tests/test_demo.py'
     test_sys_dir = 'Tests/SystemAdmin/'
     test_aud_dir = 'Tests/Audited/test_info_sharing.py'
+    test_k = './Tests/ApplicationPortal/test_core_app.py::TestCoreApp::test_orp_core_0002'
 
     # 生成 allure html 文件路径
     allure_report_dir = f'./allure_report/{timestamp}'
@@ -26,7 +27,7 @@ def run_tests():
     os.makedirs(allure_report_dir, exist_ok=True)
 
     pytest_args = [
-        test_demo_dir,
+        test_k,
         f'--alluredir={json_report_dir}',
     ]
 

@@ -1,2 +1,7 @@
 page:
   - module: "模型库"
+    config_business: "配置业务/发布应用"
+    admin_console: "后台管理"
+---
+subpage:
+  - manage_run_instances: "运行实例管理"

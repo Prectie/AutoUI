@@ -1,6 +1,17 @@
 common_admin_account:
   - username: "hty"
     password: "123"
----
+  - username: "test"
+    password: "123456"
 demo_e:
   - tree_node: "测试分类"
+  - tree_node: "分门别类"
+c:
+  ppp:
+  ccc:
+  qqq:
+d:
+  - ppp:
+  - ccc:
+    ddd:
+    pppp:

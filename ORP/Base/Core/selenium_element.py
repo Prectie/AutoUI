@@ -103,13 +103,13 @@ WAIT_REGISTRY: Dict[WaitStrategy, WaitSpecification] = {
     ),
     WaitStrategy.DEFAULT_IFRAME_SWITCH: WaitSpecification(
         mode="bool",
-        binder=lambda _: EC_ext.default_frame_to_be_available_and_switch_to_it(),
+        binder=lambda: EC_ext.default_frame_to_be_available_and_switch_to_it(),
         msg="switch to default iframe",
         needs_locator=False
     ),
     WaitStrategy.PARENT_IFRAME_SWITCH: WaitSpecification(
         mode="bool",
-        binder=lambda _: EC_ext.parent_frame_to_be_available_and_switch_to_it(),
+        binder=lambda: EC_ext.parent_frame_to_be_available_and_switch_to_it(),
         msg="switch to parent iframe",
         needs_locator=False
     ),
@@ -242,7 +242,7 @@ class ElementMixin(LocatorMixin):
         # 更改默认值(若需要)
         eff_timeout = timeout if timeout is not None else (spec.timeout or self.default_timeout)
         eff_poll = poll_frequency if poll_frequency is not None else (spec.poll or self.default_poll)
-        eff_ignored = ignored_exceptions or spec.ignored or self.default_wait_ignored
+        eff_ignored = ignored_exceptions or spec.ignored or self.default_action_ignored
 
         # 内部函数, 执行 action
         def attempt(_driver: WebDriver) -> bool:
@@ -287,7 +287,7 @@ class ElementMixin(LocatorMixin):
         # 更改默认值(若需要)
         eff_timeout = timeout if timeout is not None else (spec.timeout or self.default_timeout)
         eff_poll = poll_frequency if poll_frequency is not None else (spec.poll or self.default_poll)
-        eff_ignored = ignored_exceptions or spec.ignored or self.default_wait_ignored
+        eff_ignored = ignored_exceptions or spec.ignored or self.default_action_ignored
 
         result = None
 

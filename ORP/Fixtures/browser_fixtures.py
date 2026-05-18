@@ -116,7 +116,7 @@ def resolve_url(config) -> str:
     return mapping[env_name]
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def env_url(request):
     """
       提供给测试/页面对象使用的环境 URL
@@ -125,8 +125,6 @@ def env_url(request):
     :return: 环境对应的URL
     """
     return resolve_url(request.config)
-
-
 
 
 @pytest.fixture(scope="module")
@@ -157,5 +155,5 @@ def driver(request, download_dir):
 
 # 页面入口 PageEntry
 @pytest.fixture(scope="function", name="entry")
-def page_entry(driver, download_dir):
+def page_entry(driver, download_dir, env_url):
     yield PageEntry(driver, download_dir, env_url)

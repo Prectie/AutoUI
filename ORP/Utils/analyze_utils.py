@@ -1,6 +1,4 @@
 import itertools
-import json
-import os.path
 from functools import lru_cache
 from pathlib import Path
 from typing import Dict, List, Any, Iterable
@@ -193,9 +191,24 @@ if __name__ == "__main__":
         "drag_unit_order": "SystemAdminData/people_manage_data.yaml",
         "add_permission_role": "SystemAdminData/people_manage_data.yaml"
     }
-    # print(read_yaml_cartesian_flat(dic1))
-    # print(combine_multiple_data(["account", "role_msg"], "demo.yaml"))
-    print(combine_same_file_key(["common_admin_account", "demo_e"], "demo.yaml"))
-    # print(read_data("AuditedData/audited_positive_data.json"))
-    # print(read_yaml_data("add_resources2", "AuditedData/info_share_data.yaml"))
-    # print(combine_data("account", "role_msg", "demo.yaml"))
+
+    dic2 = {
+        # ".6_test": "Common/accounts.yaml",
+        "page": "Common/navigate_to_page.yaml",
+        # "unknown_air_situation": "Case/app_portal_data.yaml"
+    }
+
+    dic3 = {
+        "common_admin_account": "demo.yaml",
+        "demo_e": "demo.yaml"
+    }
+
+    # print(combine_same_file_key(["common_admin_account", "demo_e"], "demo.yaml"))
+    # print(read_yaml_data('auto_account', "Common/accounts.yaml"))
+    # print(read_yaml_combine(dic2))
+
+    # print(read_yaml_combine(dic3, mode='zip'))
+    print(read_yaml_combine(dic2))
+    # ap = Path("../Data/demo.yaml")
+    # with ap.open("r", encoding="utf-8") as f:
+    #     print(list(yaml.safe_load_all(f)))

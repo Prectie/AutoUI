@@ -1,3 +1,4 @@
+import time
 from typing import Dict, Tuple, List, Optional, Literal, Union
 
 from selenium.webdriver.chrome.webdriver import WebDriver
@@ -210,6 +211,37 @@ class KeywordMixin(ElementMixin):
             logger.error(f"执行切片点击操作时出错：{str(e)}")
             raise
 
+    def click_times_by_keyword(
+        self,
+        keyword: str,
+        *args,
+        times: int,
+        interval: float = 0.0,
+        wait_strategy: WaitStrategy = WaitStrategy.CLICKABLE,
+        **kw
+    ) -> bool:
+        """
+          重复点击同一元素 times 次
+        :param keyword: 关键字名称, 定位器来源
+        :param args: 用于格式化定位器字符串中的占位符 (如 "//div[text()='{}']")
+        :param times: 点击次数
+        :param interval: 点击间隔
+        :param wait_strategy: 点击元素等待策略, 默认 CLICKABLE(可点击元素)
+        :param kw: 等待配置: timeout, poll_frequency, ignored_exceptions
+        :return: boolean -> 点击成功返回 True; 失败抛 TimeoutException
+        """
+        if times <= 0:
+            raise ValueError("times 需要合法")
+
+        locator_str = self._format_locator(keyword, *args)
+        for i in range(times):
+            self.click(locator_str, wait_strategy=wait_strategy, **kw)
+
+            if interval:
+                time.sleep(interval)
+
+        return True
+
     def input_by_keyword(
         self,
         keyword: str,
@@ -225,7 +257,7 @@ class KeywordMixin(ElementMixin):
         :param kw:
                 1. 等待配置: timeout, poll_frequency, ignored_exceptions
                 2. 条件参数(该方法不需要): 传递给 WAIT_REGISTRY[EC模块方法所需参数] 的 required 关键字, 如 text/attribute/element 等
-        :return: boolean -> 点击成功返回 True; 失败抛 TimeoutException
+        :return: boolean -> 输入成功返回 True; 失败抛 TimeoutException
         """
         locator_str = self._format_locator(keyword, *args)
         return self.send_keys(locator_str, value, **kw)

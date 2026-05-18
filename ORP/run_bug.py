@@ -1,16 +1,11 @@
-import os
-import sys
-from pathlib import Path
+
 
 import pytest
-import Fixtures.browser_fixtures
-import Fixtures.func_fixtures
-from Utils import analyze_utils, path_utils
 
 
 def run_tests():
     # 需要测试的文件路径
-    test_dir = 'Tests/ApplicationPortal/test_armament_search.py::TestArmamentSearch::test_orp_core_0001'
+    test_dir = ''
 
     pytest_args = [
         test_dir,

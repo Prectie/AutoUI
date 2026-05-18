@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Callable
 from urllib.parse import urlparse, urljoin
 
 from selenium.common import TimeoutException
@@ -74,7 +74,7 @@ class BrowserMixin(ElementMixin):
             return
 
         # 3.拒绝其他写法
-        raise ValueError("所给路径的写法不正确, 请检查。所给的路径为：{path!r}")
+        raise ValueError(f"所给路径的写法不正确, 请检查。所给的路径为：{path!r}")
 
     def close_current_window(self) -> None:
         """ 关闭浏览器 """
@@ -85,33 +85,73 @@ class BrowserMixin(ElementMixin):
         self._driver.refresh()
 
     def get_current_window_title(self) -> str:
-        """ 获取当前窗口标题
-
+        """
+          获取当前窗口标题
         :return: str -> 返回当前窗口标题名称
         """
         return self._driver.title
 
     def _switch_to_handle(self, handle: str) -> None:
-        """ 切换到指定的窗口句柄
-
+        """
+          切换到指定的窗口句柄
         :param handle: 指定窗口句柄
         """
         self._driver.switch_to.window(handle)
 
     def get_current_handles(self) -> List[str]:
+        """
+          获取当前浏览器窗口所有句柄
+        :return: 句柄数组
+        """
         return self._driver.window_handles
 
-    def switch_to_new_window(self):
-        """切换到最后一个打开的窗口(通常用于新开窗口后切换)
-
-        注意: 仅支持同一进程下的同步状态, 异步状态使用该函数可能会出现问题
+    def wait_new_window_is_opened(
+        self,
+        wait_strategy: WaitStrategy = WaitStrategy.NEW_WINDOW_IS_OPENED,
+        current_handles: Optional[List[str]] = None,
+        **kw
+    ):
         """
-        handles = self._driver.window_handles
-        if not handles:
+          等待新窗口的打开
+
+        :param wait_strategy: 等待策略, 默认 WAIT_STALENESS (仅使用该策略)
+        :param current_handles: 当前窗口的所有句柄
+        :param kw: 等待配置: timeout, poll_frequency, ignored_exceptions
+        :return: bool -> 操作成功返回 True, 失败返回 False
+        """
+        return self.wait(WaitStrategy.IGNORED_LOCATOR, wait_strategy, current_handles=current_handles, **kw)
+
+    def switch_to_last_window(self, action: Callable[[], None]):
+        """
+          切换到最后一个打开的窗口(通常用于新开窗口后切换)
+        :param action: 行为, 一般会打开一个新标签页
+        """
+        if not callable(action):
+            raise ValueError("action 必须是可调用对象, 例如 lambda: ...")
+
+        old_handles = self.get_current_handles()
+        logger.info(f"{self.get_current_window_title()}")
+        if not old_handles:
             logger.warning(f"当前没有任何窗口可切换")
             return
-        # 调用切换到指定窗口句柄
-        self._switch_to_handle(handles[-1])
+
+        # 执行行为, 行为一般会打开一个新标签页
+        action()
+
+        # 等待新窗口的打开
+        self.wait_new_window_is_opened(current_handles=old_handles)
+
+        # 使用差集进行切换
+        now_handles = self.get_current_handles()
+        new_set = set(now_handles) - set(old_handles)
+        if not new_set:
+            # 如果没有新窗口
+            raise ValueError("未发现新窗口的打开, 请检查传入的行为是否打开了新窗口")
+        else:
+            new_handles = next(h for h in now_handles if h in new_set)
+
+        self._switch_to_handle(new_handles)
+        logger.info(f"{self.get_current_window_title()}")
 
     def switch_to_first_window(self):
         """ 切换到第一个打开的窗口 """

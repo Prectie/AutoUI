@@ -1,7 +1,6 @@
 import allure
 from selenium.common import NoSuchElementException
 
-from Enum.url import URLEnum
 from Page.base_page import BasePage
 
 
@@ -21,7 +20,9 @@ class LoginPage(BasePage):
 
     def _entry(self):
         """进入登录页"""
-        self.goto(URLEnum.ORP_LOGIN_URL.value)
+        if not self._env_url:
+            raise ValueError("env_url 未配置, 无法自动跳转到登录页, 请通过 pytest --env 或 toml 配置登录地址")
+        self.goto(self._env_url)
 
     """ 业务逻辑 """
     @allure.step("执行 登录 操作")

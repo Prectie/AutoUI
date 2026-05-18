@@ -2,7 +2,6 @@ import time
 
 import allure
 
-from Enum.url import URLEnum
 from Enum.wait_strategy import WaitStrategy
 from Page.base_page import BasePage
 
@@ -30,6 +29,7 @@ class MonitorPage(BasePage):
         :return: 若页面上该场景不存在正在运行的状态返回 0, 反之说明该场景在该页面中仍然存在正在运行状态
         """
         # 进入监控页面
+        # TODO 不要跳转到另一个端口，在原URL上通过后台管理进行停止任务
         self.goto(URLEnum.ORP_MONITOR.value)
         # 找到指定任务, 点击停止按钮
         self.base.element_op.click_by_keyword('action_指定的正在运行的场景_停止任务按钮', task)

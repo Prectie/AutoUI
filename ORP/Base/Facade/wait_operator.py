@@ -1,9 +1,9 @@
 import time
 from typing import Dict, Optional, List
 
-from selenium.common import TimeoutException
+from selenium.common import TimeoutException, StaleElementReferenceException
 from selenium.webdriver.chrome.webdriver import WebDriver
-
+from selenium.webdriver.remote.webelement import WebElement
 
 from Base.Core.selenium_element import ElementMixin, WaitStrategy
 from Base.Facade.element_operator import KeywordMixin
@@ -20,6 +20,93 @@ class WaitMixin(ElementMixin):
         self.el_ops = KeywordMixin(driver, locators)
 
     # ================================ 通用等待操作 ================================
+    def wait_wheel_ready(
+        self,
+        keyword: str,
+        *args,
+        wait_strategy: WaitStrategy = WaitStrategy.VISIBLE,
+        timeout: float = 10.0,
+        interval: float = 0.2,
+        stable_rounds: int = 2,
+        **kw
+    ) -> bool:
+        """
+          等待元素达到可接受 wheel 的状态(可见/不被遮罩/布局稳定)。
+        :param keyword: 关键字名称, 定位器来源
+        :param args: 用于格式化定位器字符串中的占位符 (如 "//div[text()='{}']")
+        :param wait_strategy: 等待策略, 默认 VISIBLE
+        :param timeout: 等待时间(秒)
+        :param interval: 每次检查之间的间隔时间(秒)
+        :param stable_rounds: 检查次数
+        :param kw: 等待配置: timeout, poll_frequency, ignored_exceptions
+        :return: bool -> 操作成功返回 True, 失败返回 False
+        """
+        end_time = time.time() + float(timeout)
+        last_rect = None
+        stable = 0
+
+        while time.time() < end_time:
+            el = self.el_ops.get_element_by_keyword(keyword, *args, wait_strategy=wait_strategy, **kw)
+            try:
+                info = self._driver.execute_script(
+                    """
+                    const el = arguments[0];
+                    const r = el.getBoundingClientRect();
+                    const vw = window.innerWidth;
+                    const vh = window.innerHeight;
+
+                    const w = r.width, h = r.height;
+                    const cx = r.left + w / 2;
+                    const cy = r.top + h / 2;
+
+                    const in_view = (w > 0 && h > 0 && cx >= 0 && cy >= 0 && cx <= vw && cy <= vh);
+                    let covered = true;
+                    if (in_view) {
+                      const top_el = document.elementFromPoint(cx, cy);
+                      covered = !(top_el === el || el.contains(top_el));
+                    }
+
+                    const cs = window.getComputedStyle(el);
+                    const pe_none = (cs.pointerEvents === "none");
+                    const hidden = (cs.visibility === "hidden" || cs.display === "none" || cs.opacity === "0");
+
+                    return {
+                      left: Math.round(r.left),
+                      top: Math.round(r.top),
+                      w: Math.round(w),
+                      h: Math.round(h),
+                      in_view: in_view,
+                      covered: covered,
+                      pe_none: pe_none,
+                      hidden: hidden
+                    };
+                    """,
+                    el,
+                )
+            except StaleElementReferenceException:
+                # 元素被重绘替换了, 交给外层重取元素
+                logger.warning("wheel_ready 检测到 stale element")
+                time.sleep(interval)
+                continue
+
+            rect = (info["left"], info["top"], info["w"], info["h"])
+
+            # 必要条件：在视口内、未被遮罩、可交互、非隐藏
+            if info["in_view"] and (not info["covered"]) and (not info["pe_none"]) and (not info["hidden"]):
+                if rect == last_rect:
+                    stable += 1
+                else:
+                    stable = 0
+                    last_rect = rect
+
+                if stable >= int(stable_rounds):
+                    return True
+
+            time.sleep(float(interval))
+
+        logger.error(f"wait_wheel_ready 超时, 关键字为: {keyword}")
+        return False
+
     def wait_attribute_value_presence_by_keyword(
         self,
         keyword: str,
@@ -60,21 +147,6 @@ class WaitMixin(ElementMixin):
         # 获取需要等待的元素
         stale_element = self.el_ops.get_element_by_keyword(keyword, *args)
         return self.wait(WaitStrategy.IGNORED_LOCATOR, wait_strategy, element=stale_element, **kw)
-
-    def wait_new_window_is_opened(
-        self,
-        wait_strategy: WaitStrategy = WaitStrategy.NEW_WINDOW_IS_OPENED,
-        current_handles: Optional[List[str]] = None,
-        **kw
-    ):
-        """ 等待新窗口的打开
-
-        :param wait_strategy: 等待策略, 默认 WAIT_STALENESS (仅使用该策略)
-        :param current_handles: 当前窗口的所有句柄
-        :param kw: 等待配置: timeout, poll_frequency, ignored_exceptions
-        :return: bool -> 操作成功返回 True, 失败返回 False
-        """
-        return self.wait(WaitStrategy.IGNORED_LOCATOR, wait_strategy, current_handles=current_handles, **kw)
 
     # ================================ 偏业务等待操作 ================================
     def wait_until_result_stable(

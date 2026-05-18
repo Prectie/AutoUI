@@ -27,7 +27,7 @@ class DemoPage(BasePage):
         # 点击查看
         self.base.element_op.click_by_keyword('action_demo_查看')
         # 切换到最新窗口
-        self.base.browser_op.switch_to_new_window()
+        # self.base.browser_op.switch_to_last_window(lambda )
         # 点击组件
         self.base.element_op.click_by_keyword('action_demo_组件1')
         # 全页截图

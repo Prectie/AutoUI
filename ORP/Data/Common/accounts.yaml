@@ -1,3 +1,8 @@
 auto_account:
   - username: "auto"
     password: "123"
+---
+.6_test:
+  - username: "ceshi"
+    password: "123"
+    account_name: "测试"

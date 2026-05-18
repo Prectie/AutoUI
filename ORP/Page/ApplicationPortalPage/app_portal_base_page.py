@@ -24,11 +24,8 @@ class APPPortalBasePage(BasePage):
         """
         # 切换到助手所在的 iframe 页面
         self._switch_portal_iframe()
-        # 获取当前窗口所有句柄
-        old_handles = self.base.browser_op.get_current_handles()
-        # 点击进入
-        self.base.element_op.click_by_keyword('action_武器装备智能检索助手')
-        # 等待新窗口的打开
-        self.base.wait_op.wait_new_window_is_opened(current_handles=old_handles)
         # 进入新标签页
-        self.base.browser_op.switch_to_new_window()
+        self.base.browser_op.switch_to_last_window(
+            lambda: self.base.element_op.click_by_keyword('action_武器装备智能检索助手')
+        )
+

@@ -2,6 +2,8 @@ import math
 from typing import Dict, Optional
 
 from selenium.webdriver import ActionChains, Keys
+from selenium.webdriver.common.actions.wheel_input import ScrollOrigin
+from selenium.webdriver.remote.webelement import WebElement
 
 from Base.Core.selenium_element import ElementMixin
 from selenium.webdriver.chrome.webdriver import WebDriver
@@ -18,6 +20,96 @@ class MouseAction(ElementMixin):
         # 初始化 locator 与 driver
         super().__init__(driver, locators)
         self.el_ops = KeywordMixin(driver, locators)
+
+    def move_to_element_with_offset_by_keyword(
+        self,
+        keyword: str,
+        *args,
+        wait_strategy: WaitStrategy = WaitStrategy.VISIBLE,
+        x_offset,
+        y_offset,
+        pause_time: float = 1.5,
+        **kw
+    ) -> bool:
+        """
+          移动鼠标到元素的 in-view 中心点, 可根据偏移量自定义
+        :param keyword: 关键字名称, 定位器来源
+        :param args: 用于格式化定位器字符串中的占位符 (如 "//div[text()='{}']")
+        :param wait_strategy: 等待策略, 默认 VISIBLE(可见元素)
+        :param x_offset: 相当元素中心点的 x 偏移(像素), 右为正, 左为负
+        :param y_offset: 相当元素中心点的 y 偏移(像素), 下为正, 上为负
+        :param pause_time: 移动后悬停的时间(秒)
+        :param kw: 等待配置: timeout, poll_frequency, ignored_exceptions
+        :return: bool -> 操作成功返回 True, 失败抛异常
+        """
+        if x_offset is None or y_offset is None:
+            logger.error("x/y 偏移量不能为 None")
+            raise ValueError("x/y 偏移量不能为 None")
+
+        el = self.el_ops.get_element_by_keyword(keyword, *args, wait_strategy=wait_strategy, **kw)
+
+        actions = ActionChains(self._driver)
+        actions.move_to_element_with_offset(el, int(x_offset), int(y_offset))
+        if pause_time and pause_time > 0:
+            actions.pause(pause_time)
+
+        actions.perform()
+        return True
+
+    def scroll_from_origin_by_keyword(
+        self,
+        keyword: str,
+        *args,
+        wait_strategy: WaitStrategy = WaitStrategy.VISIBLE,
+        x_offset: int = 0,
+        y_offset: int = 0,
+        delta_x: int = 0,
+        delta_y: int = 120,
+        ticks: int = 1,
+        ctrl: bool = False,
+        pause_time: float = 0.05,
+        **kw
+    ) -> bool:
+        """
+          在元素的 in-view(视口)中心点 + 偏移 处执行模拟鼠标滚轮动作
+        :param keyword: 关键字名称, 定位器来源
+        :param args: 用于格式化定位器字符串中的占位符 (如 "//div[text()='{}']")
+        :param wait_strategy: 等待策略, 默认 VISIBLE(可见元素)
+        :param x_offset: 水平方向移动像素, 右为正, 左为负
+        :param y_offset: 垂直方向移动像素, 下为正, 上为负
+        :param delta_x: 单次滚轮在 水平x 方向滚动量(像素)
+        :param delta_y: 单次滚轮在 垂直y 方向滚动量(像素), 正负方向由页面实现决定
+        :param ticks: 滚轮次数, 用于实现 "缩小一点/放大一点" 的手感
+        :param ctrl: 是否按住 Ctrl 再滚轮
+        :param pause_time: 每次滚轮之间的间隔, 秒为单位
+        :param kw: 等待配置: timeout, poll_frequency, ignored_exceptions
+        :return: bool -> 操作成功返回 True, 失败抛异常
+        """
+        if ticks <= 0:
+            logger.error("ticks 必须为正整数")
+            raise ValueError("ticks 必须为正整数")
+
+        el = self.el_ops.get_element_by_keyword(keyword, *args, wait_strategy=wait_strategy, **kw)
+
+        # 锚点
+        origin = ScrollOrigin.from_element(el, x_offset, y_offset)
+
+        actions = ActionChains(self._driver)
+
+        if ctrl:
+            actions.key_down(Keys.CONTROL)
+
+        # 按次数缩放
+        for _ in range(ticks):
+            actions.scroll_from_origin(origin, delta_x, delta_y)
+            if pause_time > 0:
+                actions.pause(pause_time)
+
+        if ctrl:
+            actions.key_up(Keys.CONTROL)
+
+        actions.perform()
+        return True
 
     def hover_and_click_by_keyword(
         self,
@@ -178,7 +270,7 @@ class MouseAction(ElementMixin):
         steps: int = 2,
         **kw
     ) -> bool:
-        """ 根据关键字定位源元素, 按给定偏移量拖拽
+        """ 根据关键字定位源元素视口中心点, 按给定偏移量拖拽
 
         :param keyword: 关键字名称, 定位器来源
         :param args: 用于格式化定位器字符串中的占位符 (如 "//div[text()='{}']")

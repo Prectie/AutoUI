@@ -32,7 +32,7 @@ def pytest_addoption(parser):
         "--ffmpeg-video",
         action="store",
         default="on",  # 默认开启录屏
-        choices=("on", "off"),  # all=无论成功或失败, only-fail=仅失败, off=不 attach
+        choices=("on", "off"),
         help="控制是否启用录屏, on 开启, off 关闭"
     )
 
@@ -273,8 +273,14 @@ def video_run_dirs(request):
 
 
 @pytest.fixture(autouse=True)
-def auto_record_video(request, video_run_dirs):
-    video_dir, log_dir = video_run_dirs
+def auto_record_video(request):
+    # 如果关闭录屏, 直接跳过
+    if request.config.getoption("--ffmpeg-video") == "off":
+        logger.info("[video] ffmpeg-video=off, 跳过录制")
+        yield
+        return
+
+    video_dir, log_dir = request.getfixturevalue("video_run_dirs")
 
     lead_in_seconds = get_lead_seconds(request.config)  # 前置余量
     tail_seconds = get_tail_seconds(request.config)  # 后置余量

@@ -17,12 +17,19 @@ def open_browser(browser: str, download_dir: str):
                 "download.default_directory": download_dir,
                 "download.prompt_for_download": False,
                 "download.directory_upgrade": True,
-                "safebrowsing.enabled": False
+                "safebrowsing.enabled": False,
+                "credentials_enable_service": False,
+                "profile.password_manager_enabled": False
             })
         # 隐藏新版"不安全下载"提示
         options.add_argument("--disable-features=InsecureDownloadWarnings")
         # 关闭扩展黑名单检查
         options.add_argument("--safebrowsing-disable-extension-blacklist")
+
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option("useAutomationExtension", False)
+        # 每个窗口都打开开发者工具, 用于调试
+        # options.add_argument("--auto-open-devtools-for-tabs")
         return webdriver.Chrome(service=service, options=options)
     elif browser.lower() == 'firefox':
         # 这里没下firefox的驱动, 暂时先用 chrome
