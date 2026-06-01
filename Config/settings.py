@@ -1,0 +1,4 @@
+BASE_URL = "http://192.168.10.129:18080/"
+DEFAULT_VIEWPORT = {"width": 1920, "height": 1080}
+DEFAULT_LOCALE = "zh-CN"
+DEFAULT_TIMEZONE = "Asia/Shanghai"
