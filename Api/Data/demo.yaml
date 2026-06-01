@@ -1,3 +1,0 @@
-- name: health_check
-  path: /health
-  method: GET

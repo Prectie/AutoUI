@@ -6,3 +6,4 @@ ORP/.idea/
 .idea/*.xml
 allure_json_report/
 allure_report/
+.venv/*
