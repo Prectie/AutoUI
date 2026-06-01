@@ -1,3 +1,0 @@
-search_assistant:
-  - question: "检索中美印三国的战斗机数量比"
-    task: "基于数据库智能检索"
