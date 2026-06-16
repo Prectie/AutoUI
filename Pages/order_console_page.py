@@ -23,5 +23,3 @@ class OrderConsolePage:
         self.order_no_input.fill(order_no)
         self.query_button.click()
 
-    def expect_order_visible(self, order_no: str) -> None:
-        expect(self.order_row(order_no)).to_be_visible()

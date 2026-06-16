@@ -1,3 +1,7 @@
 [tool.pytest.ini_options]
 testpaths = ["Tests"]
 addopts = "--browser chromium --screenshot only-on-failure --tracing retain-on-failure --headed"
+
+markers = [
+    "case_data(domain, scenario): 加载 YAML 数据"
+]
