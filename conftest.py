@@ -1,3 +1,5 @@
+import pytest
+
 from Core.data_loader import load_yaml
 
 pytest_plugins = [
@@ -16,11 +18,12 @@ def pytest_generate_tests(metafunc):
     if "case" not in metafunc.fixturenames:
         return
 
-    # 获取 marker
+    # 获取 marker.case_data
     marker = metafunc.definition.get_closest_marker("case_data")
     if marker is None:
         return
 
+    # case_date("demo", "search_cases")
     domain, scenario = marker.args
 
     if domain not in DATA_FILES:
@@ -33,4 +36,18 @@ def pytest_generate_tests(metafunc):
 
     cases = data[scenario]
 
-    metafunc.parametrize("case", cases, ids=lambda case: case.get("name", str(case)))
+    params = []
+
+    for case in cases:
+        tags = case.get("tags", [])
+        marks = [getattr(pytest.mark, tag) for tag in tags]
+
+        params.append(
+            pytest.param(
+                case,
+                marks=marks,
+                id=case.get("name", str(case))
+            )
+        )
+
+    metafunc.parametrize("case", params)
