@@ -1,6 +1,7 @@
 import pytest
 
-from Config.settings import settings
+from autoui.core.config.settings import settings
+from autoui.platforms.web.pages.order_console_page import OrderConsolePage
 
 
 @pytest.fixture(scope="session")
@@ -18,3 +19,6 @@ def browser_context_args(browser_context_args):
     }
 
 
+@pytest.fixture
+def order_console_page(page):
+    return OrderConsolePage(page)

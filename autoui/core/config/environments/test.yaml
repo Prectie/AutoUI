@@ -1,0 +1,6 @@
+base_url: "https://www.designkit.cn/"
+viewport:
+  width: 1920
+  height: 1080
+locale: "zh-CN"
+timezone_id: "Asia/Shanghai"

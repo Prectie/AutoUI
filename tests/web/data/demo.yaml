@@ -1,11 +1,11 @@
 search_cases:
   - name: 按订单号查询
-    tag: ["smoke"]
+    tags: ["smoke"]
     keyword: ORD-1048
     expected_order: ORD-1048
 
   - name: 按客户名称查询
-    tag: ["regression"]
+    tags: ["regression"]
     keyword: 北辰实验室
     expected_order: ORD-1047
 
