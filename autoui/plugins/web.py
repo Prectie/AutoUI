@@ -1,6 +1,6 @@
 import pytest
 
-from autoui.core.config.settings import settings
+from autoui.core.config import settings
 from autoui.platforms.web.pages.order_console_page import OrderConsolePage
 
 

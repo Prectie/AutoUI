@@ -1,0 +1,21 @@
+cn:
+  pre:
+    base_url: "https://pre.designkit.cn/"
+  beta:
+    base_url: "https://beta.designkit.cn/"
+  release:
+    base_url: "https://www.designkit.cn/"
+com:
+  pre:
+    base_url: "https://pre.designkit.com/"
+  beta:
+    base_url: "https://beta.designkit.com/"
+  release:
+    base_url: "https://www.designkit.com/"
+zawa:
+  pre:
+    base_url: "https://pre.zawa.ai/"
+  beta:
+    base_url: "https://beta.zawa.ai/"
+  release:
+    base_url: "https://zawa.ai/"

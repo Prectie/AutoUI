@@ -1,4 +1,6 @@
-base_url: "https://www.designkit.cn/"
+site: cn
+environment: pre
+
 viewport:
   width: 1920
   height: 1080

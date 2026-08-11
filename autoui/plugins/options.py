@@ -10,9 +10,12 @@ def pytest_addoption(parser):
     )
 
     group.addoption(
-        "--base-url",
+        "--site",
         action="store",
-        dest="autoui_env",
+        dest="autoui_site",
         default=None,
-        help="选择 AutoUI 环境 profile"
+        help="选择 AutoUI 站点（cn、com、zawa） "
     )
+
+def pytest_sessionstart(session):
+    pass

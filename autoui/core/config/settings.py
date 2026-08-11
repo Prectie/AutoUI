@@ -33,8 +33,6 @@ def load_profile(environment: str) -> dict:
 def build_settings(profile: dict) -> Settings:
     viewport = profile["viewport"]
 
-
-
     return Settings(
         base_url=profile["base_url"],
         viewport=Viewport(
@@ -45,10 +43,40 @@ def build_settings(profile: dict) -> Settings:
         timezone_id=profile["timezone_id"]
     )
 
-def resolve_config()
+def resolve_settings(
+    cli_site=None,
+    cli_env=None,
+    cli_base_url=None,
+    env_vars=None
+):
+    env_vars = env_vars or {}
+
+    defaults = load_profile("defaults")
+    targets = load_profile("targets")
+
+    site = cli_site or env_vars.get("AUTOUI_SITE") or defaults["site"]
+    environment = cli_env or env_vars.get("AUTOUI_ENV") or defaults["environment"]
+
+    try:
+        target = targets[site][environment]
+    except KeyError as e:
+        raise ValueError(f"未知站点或环境：site={site!r}, environment={environment!r}") from e
+
+    base_url = cli_base_url or env_vars.get("BASE_URL") or target["base_url"]
+
+    config = {
+        **defaults,
+        **target,
+        "base_url": base_url
+    }
+
+    return build_settings(config)
+
+
+
 
 if __name__ == "__main__":
-    profiles = load_profile("test")
-    setting = build_settings(profiles)
+
+    setting = resolve_settings()
     print(setting)
     print(setting.viewport.width)
