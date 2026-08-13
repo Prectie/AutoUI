@@ -1,3 +1,9 @@
+import os
+
+import pytest
+
+from autoui.core.config.settings import resolve_settings
+
 def pytest_addoption(parser):
     group = parser.getgroup("autoui")
 
@@ -18,4 +24,17 @@ def pytest_addoption(parser):
     )
 
 def pytest_sessionstart(session):
-    pass
+    config = session.config
+
+    settings = resolve_settings(
+        cli_site=config.getoption("autoui_site"),
+        cli_env=config.getoption("autoui_env"),
+        cli_base_url=config.getoption("base_url"),
+        env_vars=os.environ
+    )
+
+    config.autoui_settings = settings
+
+@pytest.fixture(scope="session")
+def settings(request):
+    return request.config.autoui_settings

@@ -1,11 +1,9 @@
 import pytest
 
-from autoui.core.config import settings
 from autoui.platforms.web.pages.order_console_page import OrderConsolePage
 
-
 @pytest.fixture(scope="session")
-def browser_context_args(browser_context_args):
+def browser_context_args(browser_context_args, settings):
     return {
         **browser_context_args,
         "base_url": settings.base_url,
@@ -18,7 +16,7 @@ def browser_context_args(browser_context_args):
         "ignore_https_errors": True,
     }
 
-
 @pytest.fixture
 def order_console_page(page):
     return OrderConsolePage(page)
+
