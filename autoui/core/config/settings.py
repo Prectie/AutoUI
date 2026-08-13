@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 import yaml
@@ -31,6 +32,16 @@ def load_profile(environment: str) -> dict:
     return data or {}
 
 def build_settings(profile: dict) -> Settings:
+    required_fields = ("base_url", "viewport", "locale", "timezone_id")
+    missing_fields = [
+        field for field in required_fields if field not in profile
+    ]
+
+    if missing_fields:
+        raise ValueError(
+            f"配置缺少必填字段：{', '.join(missing_fields)}"
+        )
+
     viewport = profile["viewport"]
 
     return Settings(
@@ -44,10 +55,10 @@ def build_settings(profile: dict) -> Settings:
     )
 
 def resolve_settings(
-    cli_site=None,
-    cli_env=None,
-    cli_base_url=None,
-    env_vars=None
+    cli_site: str | None=None,
+    cli_env: str | None=None,
+    cli_base_url: str | None=None,
+    env_vars: Mapping[str, str] | None=None
 ):
     env_vars = env_vars or {}
 
@@ -62,7 +73,7 @@ def resolve_settings(
     except KeyError as e:
         raise ValueError(f"未知站点或环境：site={site!r}, environment={environment!r}") from e
 
-    base_url = cli_base_url or env_vars.get("BASE_URL") or target["base_url"]
+    base_url = cli_base_url or env_vars.get("AUTOUI_BASE_URL") or target["base_url"]
 
     config = {
         **defaults,
@@ -72,11 +83,12 @@ def resolve_settings(
 
     return build_settings(config)
 
-
-
-
 if __name__ == "__main__":
 
-    setting = resolve_settings()
+    setting = resolve_settings(
+        cli_site="com",
+        cli_env="beta",
+        cli_base_url="www.xxx.com"
+    )
     print(setting)
     print(setting.viewport.width)

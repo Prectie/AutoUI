@@ -7,3 +7,11 @@ ORP/.idea/
 allure_json_report/
 allure_report/
 .venv/*
+
+# Local IDE, tool session, test artifact, and Python cache files
+.idea/
+.omo/run-continuation/
+.playwright-mcp/
+test-results/
+__pycache__/
+**/__pycache__/
