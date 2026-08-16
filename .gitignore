@@ -13,5 +13,7 @@ allure_report/
 .omo/run-continuation/
 .playwright-mcp/
 test-results/
+artifacts/
+.pytest_cache/
 __pycache__/
 **/__pycache__/
