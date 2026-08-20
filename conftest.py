@@ -3,4 +3,5 @@ pytest_plugins = [
     "autoui.plugins.web",
     "autoui.plugins.options",
     "autoui.plugins.runtime",
+    "autoui.plugins.playwright_logging"
 ]
