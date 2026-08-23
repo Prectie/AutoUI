@@ -1,19 +1,40 @@
-# Default ignored files
+# Python virtual environment and generated cache files
+.venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# IDE and local tool state
+.idea/
+.vscode/
 /shelf/
 /workspace.xml
 ORP/.idea/
-.idea/*.iml
-.idea/*.xml
-allure_json_report/
-allure_report/
-.venv/*
-
-# Local IDE, tool session, test artifact, and Python cache files
-.idea/
 .omo/run-continuation/
 .playwright-mcp/
+
+# Playwright, pytest and test report artifacts
 test-results/
 artifacts/
-.pytest_cache/
-__pycache__/
-**/__pycache__/
+.playwright-browsers/
+playwright-report/
+blob-report/
+allure-results/
+allure_json_report/
+allure_report/
+
+# Coverage and local log files
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.log
+
+# Local environment and operating-system files
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db

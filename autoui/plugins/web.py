@@ -13,6 +13,7 @@ pytest-playwright 的浏览器上下文中，并提供 Web UI 测试所需的页
 
 import pytest
 
+from autoui.platforms.web.pages.baidu_page import BaiduPage
 from autoui.platforms.web.pages.order_console_page import OrderConsolePage
 
 @pytest.fixture(scope="session")
@@ -75,4 +76,10 @@ def browser_context_args(browser_context_args, settings):
 @pytest.fixture
 def order_console_page(page):
     return OrderConsolePage(page)
+
+
+@pytest.fixture
+def baidu_page(page):
+    """提供百度搜索页面对象。"""
+    return BaiduPage(page)
 

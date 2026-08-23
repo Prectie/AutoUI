@@ -19,7 +19,7 @@ from typing import Any, Iterator
 
 import pytest
 from nb_log import get_logger
-from playwright.sync_api import Locator
+from playwright.sync_api import Locator, Page
 
 from autoui.core.logging.autoui_logger import AutoUILogger
 from autoui.core.runtime import ExecutionIdentity
@@ -32,6 +32,8 @@ _current_autoui_logger: ContextVar[AutoUILogger | None] = ContextVar(
 )
 
 _original_locator_click: Callable[..., Any] | None = None
+_original_locator_fill: Callable[..., Any] | None = None
+_original_page_goto: Callable[..., Any] | None = None
 
 def run_logged_action(
     *,
@@ -124,34 +126,111 @@ def _wrap_locator_click(
     return logged_click
 
 
+def _wrap_locator_fill(
+    original_fill: Callable[..., Any],
+) -> Callable[..., Any]:
+    """为 Locator.fill 增加统一的操作日志生命周期。"""
+
+    @wraps(original_fill)
+    def logged_fill(
+        locator: Locator,
+        value: str,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
+        return run_logged_action(
+            action_name="Locator.fill",
+            action=lambda: original_fill(
+                locator,
+                value,
+                *args,
+                **kwargs,
+            ),
+            data={
+                "target": repr(locator),
+                "value": value,
+                "args": list(args),
+                "options": dict(kwargs),
+            },
+        )
+
+    return logged_fill
+
+
+def _wrap_page_goto(
+    original_goto: Callable[..., Any],
+) -> Callable[..., Any]:
+    """为 Page.goto 增加统一的操作日志生命周期。"""
+
+    @wraps(original_goto)
+    def logged_goto(
+        page: Page,
+        url: str,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
+        return run_logged_action(
+            action_name="Page.goto",
+            action=lambda: original_goto(
+                page,
+                url,
+                *args,
+                **kwargs,
+            ),
+            data={
+                "url": url,
+                "args": list(args),
+                "options": dict(kwargs),
+            },
+        )
+
+    return logged_goto
+
+
 def install_playwright_logging() -> None:
     """安装 Playwright 动作日志包装。
 
     该函数在每个 pytest 进程中只执行一次，避免重复包装导致同一个
     click 动作产生多组重复日志。
     """
-    global _original_locator_click
+    global _original_locator_click, _original_locator_fill, _original_page_goto
 
     if _original_locator_click is not None:
         return
 
     _original_locator_click = Locator.click
+    _original_locator_fill = Locator.fill
+    _original_page_goto = Page.goto
     setattr(
         Locator,
         "click",
         _wrap_locator_click(_original_locator_click),
     )
+    setattr(
+        Locator,
+        "fill",
+        _wrap_locator_fill(_original_locator_fill),
+    )
+    setattr(
+        Page,
+        "goto",
+        _wrap_page_goto(_original_page_goto),
+    )
 
 
 def restore_playwright_logging() -> None:
     """恢复 Playwright 原始方法，避免测试进程状态泄漏。"""
-    global _original_locator_click
+    global _original_locator_click, _original_locator_fill, _original_page_goto
 
     if _original_locator_click is None:
         return
 
     setattr(Locator, "click", _original_locator_click)
+    setattr(Locator, "fill", _original_locator_fill)
+    setattr(Page, "goto", _original_page_goto)
     _original_locator_click = None
+    _original_locator_fill = None
+    _original_page_goto = None
 
 
 @pytest.fixture(scope="session", autouse=True)
