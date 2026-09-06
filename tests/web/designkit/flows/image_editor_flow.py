@@ -37,14 +37,21 @@ class ImageEditorFlow:
         """上传测试场景指定的标准图片。"""
         self._current_editor().upload_image(image_path)
 
-    @allure.step("添加标题并应用随机 VIP 字体")
-    def add_title_with_vip_font(self) -> str:
-        """添加标题、打开字体面板并返回选中的 VIP 字体名称。"""
+    @allure.step("添加标题并应用 VIP 字体：{font_name}")
+    def add_title_with_vip_font(self, font_name: str) -> str:
+        """添加标题、打开字体面板并应用指定 VIP 字体。
+
+        参数：
+            font_name: DesignKit 字体面板中的精确字体名称，由测试场景提供。
+
+        返回：
+            页面最终显示的已选字体名称。
+        """
         editor = self._current_editor()
         editor.open_add_menu()
         editor.add_title()
         editor.open_font_selector()
-        return editor.choose_random_vip_font()
+        return editor.choose_vip_font(font_name)
 
     @allure.step("下载图片编辑结果")
     def download_result(self, output_dir: Path) -> Path:

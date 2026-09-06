@@ -65,6 +65,20 @@ jobs:
           mkdir -p .auth
           printf '%s' "$STORAGE_STATE_B64" | base64 --decode > "$DESIGNKIT_STORAGE_STATE"
 
+      # Allure 3 的 historyPath 是工作区文件；按分支恢复最近一次历史，
+      # 每次运行使用唯一 key 保存新历史，避免缓存条目不可变导致覆盖失败。
+      - name: Prepare Allure history directory
+        run: mkdir -p artifacts/allure-history
+
+      - name: Restore previous Allure history
+        continue-on-error: true
+        uses: actions/cache/restore@v5
+        with:
+          path: artifacts/allure-history
+          key: allure-history-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            allure-history-${{ github.ref_name }}-
+
       # 由 Allure 3 启动并行回归，同时捕获进程输出、生成报告并透传 pytest 退出码。
       # 不设置 continue-on-error，确保测试失败会让 workflow 失败。
       # CI 显式声明运行参数并清空 pyproject.toml 中仅供本地调试的 --headed。
@@ -85,6 +99,15 @@ jobs:
           --junit-xml=artifacts/junit.xml
           --alluredir=artifacts/allure-results
           --clean-alluredir
+
+      # 即使回归失败，也保留本次已经生成的 history，供下一次运行继续累计趋势。
+      - name: Save current Allure history
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: actions/cache/save@v5
+        with:
+          path: artifacts/allure-history
+          key: allure-history-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       # 测试失败后仍然上传报告、截图和 trace，便于定位失败原因。
       # always() 只保证上传步骤执行，不会覆盖上一步 pytest 的失败状态。

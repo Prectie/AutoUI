@@ -15,7 +15,7 @@ def test_image_editor_flow_orchestrates_page_capabilities() -> None:
     home_page.open_image_editor.return_value = browser_page
 
     editor_page = MagicMock(name="editor_page")
-    editor_page.choose_random_vip_font.return_value = "VIP Font"
+    editor_page.choose_vip_font.return_value = "VIP Font"
     downloaded_file = Path("artifacts/result.png")
     editor_page.download_to.return_value = downloaded_file
 
@@ -26,7 +26,7 @@ def test_image_editor_flow_orchestrates_page_capabilities() -> None:
         flow = ImageEditorFlow(home_page)
         flow.open_editor()
         flow.upload_standard_image(Path("standard.jpg"))
-        selected_font = flow.add_title_with_vip_font()
+        selected_font = flow.add_title_with_vip_font("VIP Font")
         result = flow.download_result(Path("artifacts"))
 
     home_page.goto.assert_called_once_with()
@@ -37,7 +37,7 @@ def test_image_editor_flow_orchestrates_page_capabilities() -> None:
     editor_page.open_add_menu.assert_called_once_with()
     editor_page.add_title.assert_called_once_with()
     editor_page.open_font_selector.assert_called_once_with()
-    editor_page.choose_random_vip_font.assert_called_once_with()
+    editor_page.choose_vip_font.assert_called_once_with("VIP Font")
     editor_page.download_to.assert_called_once_with(Path("artifacts"))
     assert selected_font == "VIP Font"
     assert result == downloaded_file

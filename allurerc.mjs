@@ -37,6 +37,9 @@ const environments = Object.fromEntries(
 export default defineConfig({
   name: "AutoUI Test Report",
   output: "./artifacts/allure-report",
+  // Allure 3 负责生成并追加跨运行历史；CI 在运行前恢复、运行后保存此目录。
+  historyPath: "./artifacts/allure-history/history.jsonl",
+  historyLimit: 30,
   plugins: {
     awesome: {
       options: {

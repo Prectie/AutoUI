@@ -250,7 +250,7 @@ Interface 只包含调用者需要的页面能力：
 class EditorPage:
     def upload_image(self, image_path: Path) -> None: ...
     def add_title(self) -> None: ...
-    def choose_random_vip_font(self) -> str: ...
+    def choose_vip_font(self, font_name: str) -> str: ...
     def download_to(self, output_dir: Path) -> Path: ...
 ```
 
@@ -262,6 +262,9 @@ class EditorPage:
 - 不依赖 pytest request、Allure、Trace、logger 或运行时对象；
 - 不承担最终业务断言；
 - 页面跳转或新 Tab 应返回新的 `Page` 或新的 Page Object。
+
+字体等需要从候选集合选择的页面能力必须接收测试场景提供的稳定名称（例如
+`choose_vip_font("点字少年")`），不得在 Page Object 内部随机选择；需要扩大覆盖时由测试数据参数化。
 
 只有两个真实页面实现出现相同且稳定的行为后，才考虑提取共享 Module。
 
@@ -281,8 +284,8 @@ class ImageEditorFlow:
     @allure.step("上传标准图片：{image_path}")
     def upload_standard_image(self, image_path: Path) -> None: ...
 
-    @allure.step("添加标题并应用随机 VIP 字体")
-    def add_title_with_vip_font(self) -> str: ...
+    @allure.step("添加标题并应用 VIP 字体：{font_name}")
+    def add_title_with_vip_font(self, font_name: str) -> str: ...
 
     @allure.step("下载图片编辑结果")
     def download_result(self, output_dir: Path) -> Path: ...
@@ -294,6 +297,7 @@ Interface 约束：
 - 一个业务操作可以调用任意数量 Page Object 方法；
 - 只有业务读者关心的公开操作使用 `@allure.step`；
 - 私有辅助方法不强制生成步骤；
+- 场景数据显式传入业务操作，避免随机值破坏重试和 History 聚合；
 - 返回测试断言或后续编排真正需要的值；
 - 不捕获并改写 Playwright 或断言异常。
 
@@ -310,7 +314,7 @@ def test_editor_add_title_vip_font_download(
 ) -> None:
     image_editor.open_editor()
     image_editor.upload_standard_image(EDITOR_STANDARD_IMAGE)
-    selected_font = image_editor.add_title_with_vip_font()
+    selected_font = image_editor.add_title_with_vip_font("点字少年")
     downloaded_file = image_editor.download_result(Path(output_path))
 
     assert selected_font
@@ -362,7 +366,7 @@ Allure Report 3 的 npm 依赖、配置文件、主题与平台嵌入方式属�
 | Environments | AutoUI 只提供稳定运行 labels，环境聚合交给 Allure | v1 |
 | Trace、截图和视频附件 | Allure pytest Integration Module 负责标准附件关联 | v1 |
 | Global errors、stdout、stderr | CI 使用 `allure run -- pytest ...` 捕获 | v1 |
-| History、稳定性和趋势 | 优先使用 `historyPath`，不自建趋势数据库 | v1 CI 稳定后 |
+| History、稳定性和趋势 | 使用 `historyPath`，CI 以分支缓存持久化，不自建趋势数据库 | v1 |
 | Known Issues | 使用 Allure 文件与缺陷链接，不自建已知问题系统 | v1 CI 稳定后 |
 | Quality Gate | 负责发布门禁；不修改单个 pytest outcome | v1 CI 稳定后 |
 | Multistage dumps | 多环境或多阶段 CI 出现时合并运行 | 后续 |
@@ -509,7 +513,7 @@ trace.zip            桌面 Web 失败诊断
 screenshot/video     按 pytest-playwright 策略生成
 downloads            当前测试项 output_path 下的业务产物
 Allure dump           多阶段运行的完整状态归档（需要时启用）
-history JSONL         Allure 3 跨运行历史（CI 稳定后启用）
+history JSONL         Allure 3 跨运行历史（CI 分支缓存持久化）
 ```
 
 建议策略：
@@ -595,7 +599,7 @@ Playwright Python 包升级后，必须安装匹配版本的 Chromium。CI 与�
 - Allure 3 `allure run` 在受控失败下生成报告并保留 pytest 退出码 `1`；
 - DesignKit storage state 注入后，真实场景完成打开编辑器、上传图片、选择 VIP 字体和下载作品，四个 Allure 业务步骤均通过。
 
-正式 `autoui/plugins/allure_reporting.py` 已实现并通过生命周期、附件契约、并行隔离和带有效登录态的 DesignKit 完整回归验证。远端 GitHub Actions 仍需配置登录态 Secret 并在代码推送后验证。
+正式 `autoui/plugins/allure_reporting.py` 已实现并通过生命周期、附件契约、并行隔离和带有效登录态的 DesignKit 完整回归验证。远端 GitHub Actions 已配置登录态 Secret 并成功运行。
 
 ## 12. 实施计划
 
@@ -639,7 +643,7 @@ Playwright Python 包升级后，必须安装匹配版本的 Chromium。CI 与�
 
 ### 阶段 4：报告、并行与 CI
 
-状态：本地实现、登录态场景和 CI workflow 配置已完成；远端 workflow 待配置 Secret 并推送后验证。
+状态：已完成。本地实现、登录态场景、CI workflow 与远端 GitHub Actions 验证均通过。
 
 - 建立 Allure pytest Integration Module，注入稳定运行 labels；
 - 将失败 Trace 以标准媒体类型附加到对应 Allure 测试项；
@@ -650,9 +654,9 @@ Playwright Python 包升级后，必须安装匹配版本的 Chromium。CI 与�
 - 验证串行与 `xdist -n 2`；
 - 更新 CI 的 Python、Node、Allure 与浏览器安装步骤。
 
-### 阶段 5：Allure 3 运行治理
+### 阶段 5：Allure 3 运行治理（当前）
 
-- CI 稳定后启用 history 和稳定性趋势；
+- 已启用 `historyPath`，并通过 GitHub Actions 分支缓存跨运行保存 history；
 - 引入 Known Issues 文件及缺陷链接流程；
 - 从最小规则开始启用 Quality Gate；
 - 出现多环境 CI matrix 后使用 dump archive 汇总；

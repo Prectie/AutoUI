@@ -76,8 +76,8 @@ tests/
 Business Flow 直接使用 Allure 原生装饰器声明业务语义：
 
 ```python
-@allure.step("添加标题并应用随机 VIP 字体")
-def add_title_with_vip_font(self) -> None:
+@allure.step("添加标题并应用 VIP 字体：{font_name}")
+def add_title_with_vip_font(self, font_name: str) -> str:
     ...
 ```
 
@@ -123,14 +123,17 @@ class ImageEditorFlow:
     @allure.step("上传标准图片：{image_path}")
     def upload_standard_image(self, image_path: str) -> None: ...
 
-    @allure.step("添加标题并应用随机 VIP 字体")
-    def add_title_with_vip_font(self) -> None: ...
+    @allure.step("添加标题并应用 VIP 字体：{font_name}")
+    def add_title_with_vip_font(self, font_name: str) -> str: ...
 
     @allure.step("下载图片编辑结果")
     def download_result(self, output_path: str) -> Path: ...
 ```
 
 业务步骤数量由测试场景调用的业务操作决定，不设固定个数。一次性且不值得复用的业务步骤可以直接使用 Allure context step，但不是常规写法。
+
+需要选择候选项时，测试场景显式传入稳定业务数据（当前示例为
+`点字少年`）；扩大覆盖使用 pytest 参数化，不在 Page Object 或 Flow 内部生成随机值。
 
 ### 4.5 DesignKit tests
 
@@ -147,7 +150,7 @@ def test_editor_add_title_vip_font_download(
 ) -> None:
     image_editor.open_editor()
     image_editor.upload_standard_image(str(EDITOR_STANDARD_IMAGE))
-    image_editor.add_title_with_vip_font()
+    image_editor.add_title_with_vip_font("点字少年")
 
     downloaded_file = image_editor.download_result(output_path)
 

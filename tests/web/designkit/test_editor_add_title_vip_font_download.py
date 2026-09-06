@@ -9,6 +9,9 @@ from tests.resources.paths import EDITOR_STANDARD_IMAGE
 from tests.web.designkit.flows import ImageEditorFlow
 
 
+VIP_FONT_NAME = "点字少年"
+
+
 @allure.parent_suite("Desktop Web")
 @allure.suite("DesignKit")
 @allure.label("product", "DesignKit")
@@ -23,9 +26,9 @@ def test_editor_add_title_vip_font_download(
     """验证会员应用 VIP 字体后可以下载非空图片编辑结果。"""
     image_editor_flow.open_editor()
     image_editor_flow.upload_standard_image(EDITOR_STANDARD_IMAGE)
-    selected_font = image_editor_flow.add_title_with_vip_font()
+    selected_font = image_editor_flow.add_title_with_vip_font(VIP_FONT_NAME)
     downloaded_file = image_editor_flow.download_result(Path(output_path))
 
-    assert selected_font, "未获得已选择的 VIP 字体名称"
+    assert selected_font == VIP_FONT_NAME, "未应用指定的 VIP 字体"
     assert downloaded_file.is_file(), f"下载文件不存在：{downloaded_file}"
     assert downloaded_file.stat().st_size > 0, f"下载文件为空：{downloaded_file}"

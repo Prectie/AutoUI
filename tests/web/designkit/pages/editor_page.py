@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import random
 from pathlib import Path
 
 from playwright.sync_api import Locator, Page, expect
@@ -143,23 +142,48 @@ class EditorPage:
         self.font_selector.click()
         expect(self.visible_font_panel).to_be_visible()
 
-    def choose_random_vip_font(self) -> str:
-        """选择前十二个候选项中的一个 VIP 字体并返回字体名称。
+    def choose_vip_font(self, font_name: str) -> str:
+        """按页面提供的字体名称选择 VIP 字体并返回实际选中名称。
+
+        参数：
+            font_name: DesignKit 字体下拉项 ``label`` 属性中的精确名称。
+                测试场景应显式提供该值，避免随机选择导致结果不可复现。
+
+        返回：
+            选择完成后字体选择器显示的名称。
 
         异常：
-            AssertionError: 没有候选字体，或点击后字体名称没有变化。
+            ValueError: ``font_name`` 为空或只包含空白字符。
+            AssertionError: 页面没有匹配的 VIP 字体，或点击后字体名称没有变化。
         """
-        before_font_name = self.font_selector.inner_text().strip()
-        option_count = self.available_vip_fonts.count()
-        if option_count == 0:
-            raise AssertionError("没有找到可选择的 VIP 字体")
+        requested_font_name = font_name.strip()
+        if not requested_font_name:
+            raise ValueError("VIP 字体名称不能为空")
 
-        option_index = random.randrange(min(option_count, 12))
-        self.available_vip_fonts.nth(option_index).click()
+        before_font_name = self.font_selector.inner_text().strip()
+        options = self.available_vip_fonts
+        matching_options = [
+            options.nth(index)
+            for index in range(options.count())
+            if options.nth(index).get_attribute("label") == requested_font_name
+        ]
+        if not matching_options:
+            raise AssertionError(
+                f"没有找到名称为「{requested_font_name}」的可选择 VIP 字体"
+            )
+
+        # 字体面板使用虚拟列表；滚动后再点击可以让不在当前视口的项获得实际布局。
+        selected_option = matching_options[0]
+        selected_option.scroll_into_view_if_needed()
+        expect(selected_option).to_be_visible(timeout=10_000)
+        selected_option.click()
 
         after_font_name = self.font_selector.inner_text().strip()
-        if not after_font_name or after_font_name == before_font_name:
-            raise AssertionError("VIP 字体点击后未切换成功")
+        if after_font_name != requested_font_name or after_font_name == before_font_name:
+            raise AssertionError(
+                f"VIP 字体点击后未切换成功，期望「{requested_font_name}」，"
+                f"实际为「{after_font_name}」"
+            )
         return after_font_name
 
     def download_to(self, output_dir: Path) -> Path:
