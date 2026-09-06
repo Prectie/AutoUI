@@ -11,7 +11,6 @@ from tests.web.designkit.flows import ImageEditorFlow
 
 VIP_FONT_NAME = "点字少年"
 
-
 @allure.parent_suite("Desktop Web")
 @allure.suite("DesignKit")
 @allure.label("product", "DesignKit")
