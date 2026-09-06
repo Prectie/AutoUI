@@ -67,6 +67,7 @@ jobs:
 
       # 由 Allure 3 启动并行回归，同时捕获进程输出、生成报告并透传 pytest 退出码。
       # 不设置 continue-on-error，确保测试失败会让 workflow 失败。
+      # CI 显式声明运行参数并清空 pyproject.toml 中仅供本地调试的 --headed。
       # playwright 目录由 pytest-playwright 管理，Allure 和 JUnit 使用独立路径，
       # 避免 pytest-playwright 清理 output 目录时删除其他报告产物。
       - name: Run parallel regression and generate Allure report
@@ -75,6 +76,7 @@ jobs:
           --output artifacts/allure-report
           --
           python -m pytest
+          -o addopts=
           --strict-markers
           -n 2
           --output=artifacts/playwright
