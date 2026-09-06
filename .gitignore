@@ -15,10 +15,14 @@ ORP/.idea/
 .omo/run-continuation/
 .playwright-mcp/
 
+# Node tooling
+node_modules/
+
 # Playwright, pytest and test report artifacts
 test-results/
 artifacts/
 .playwright-browsers/
+.auth/
 playwright-report/
 blob-report/
 allure-results/

@@ -1,0 +1,11 @@
+{
+  "name": "autoui-reporting",
+  "private": true,
+  "scripts": {
+    "allure:generate": "allure generate artifacts/allure-results --output artifacts/allure-report",
+    "allure:open": "allure open artifacts/allure-report"
+  },
+  "devDependencies": {
+    "allure": "3.14.3"
+  }
+}

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="10.812" timestamp="2026-09-01T23:30:42.272727+08:00" hostname="RTE"><testcase classname="tests.web.regression.test_editor_add_title_vip_font_download" name="test_editor_add_title_vip_font_download[chromium]" time="10.758"><properties><property name="testrun_uid" value="f0883da5d062402788704c6761ac2f95" /><property name="worker_id" value="master" /><property name="nodeid" value="tests/web/regression/test_editor_add_title_vip_font_download.py::test_editor_add_title_vip_font_download[chromium]" /><property name="output_path" value="D:\GitHubRepository\AutoUI\artifacts-editor-open-image-fix\tests-web-regression-test-editor-add-title-vip-font-download-py-test-editor-add-title-vip-font-download-chromium" /></properties><failure message="AssertionError: Locator expected to be hidden&#10;Actual value: None&#10;Error: strict mode violation: get_by_text(&quot;加载中&quot;, exact=True) resolved to 2 elements:&#10;    1) &lt;div class=&quot;b-loading-component__tip&quot;&gt;加载中&lt;/div&gt; aka locator(&quot;#editor-container&quot;).get_by_text(&quot;加载中&quot;)&#10;    2) &lt;div class=&quot;b-loading-component__tip&quot;&gt;加载中&lt;/div&gt; aka get_by_text(&quot;加载中&quot;).nth(1)&#10; &#10;Call log:&#10;  - Expect &quot;to_be_hidden&quot; with timeout 60000ms&#10;  - waiting for get_by_text(&quot;加载中&quot;, exact=True)">home_page = &lt;autoui.platforms.web.pages.home_page.HomePage object at 0x00000286848F85C0&gt;
+web_step_runtime = &lt;autoui.platforms.web.steps.WebStepRuntime object at 0x00000286846575F0&gt;
+output_path = 'D:\\GitHubRepository\\AutoUI\\artifacts-editor-open-image-fix\\tests-web-regression-test-editor-add-title-vip-font-download-py-test-editor-add-title-vip-font-download-chromium'
+
+    @pytest.mark.regression
+    @pytest.mark.requires_login
+    def test_editor_add_title_vip_font_download(
+        home_page: HomePage,
+        web_step_runtime: WebStepRuntime,
+        output_path: str,
+    ) -&gt; None:
+        """验证会员应用 VIP 字体后可以下载图片编辑结果。
+    
+        流程与 Java 源用例保持一一对应：
+            1. 进入图片编辑器；
+            2. 处理通用宣传弹窗；
+            3. 上传标准图；
+            4. 打开添加菜单；
+            5. 添加标题文字图层；
+            6. 打开字体下拉；
+            7. 随机选择 VIP 字体；
+            8. 下载并验证结果文件非空。
+    
+        会员登录态和标准图素材属于源测试框架的外部前置条件，
+        当前迁移不在测试中复制账号登录或替换素材。
+        """
+        home_page.goto()
+        editor_browser_page = home_page.tap_img_editor_btn()
+        # 图片编辑入口会打开新的 Tab，后续 Page Object 必须绑定返回的新 Page。
+        common_page = CommonPage(editor_browser_page, web_step_runtime)
+        editor_page = EditorPage(editor_browser_page, web_step_runtime)
+        common_page.handle_common_pop()
+&gt;       editor_page.open_material(str(EDITOR_STANDARD_IMAGE))
+
+tests\web\regression\test_editor_add_title_vip_font_download.py:40: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+autoui\platforms\web\steps.py:256: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;autoui.platforms.web.pages.editor_page.EditorPage object at 0x00000286848F97F0&gt;
+image_path = 'D:\\GitHubRepository\\AutoUI\\tests\\resources\\images\\editor\\standard.jpg'
+
+    @business_step("上传标准图素材进入编辑态")
+    def open_material(self, image_path: str) -&gt; None:
+        """点击打开图片并上传指定素材。
+    
+        参数：
+            image_path:
+                源 ``WebConfig.getTestImgPath("测试图", "标准图.jpg")``
+                对应的本地素材路径。源 Java 方法使用 String，
+                因此这里也以字符串进入业务步骤日志，再在方法内部转换为 Path。
+                路径由测试用例传入，本方法不替换素材。
+    
+        异常：
+            FileNotFoundError：素材路径不存在。
+            Playwright 异常：点击、文件选择器或上传完成等待失败时抛出。
+        """
+        image_file = Path(image_path)
+        if not image_file.is_file():
+            raise FileNotFoundError(f"测试素材不存在：{image_file}")
+    
+        # 文件选择器必须在点击前注册监听，确保点击产生的 filechooser 事件
+        # 能被当前业务步骤接收；这是 Playwright 的事件同步，不是页面导航等待。
+        with self.page.expect_file_chooser() as file_chooser_info:
+            self.open_img_btn.click()
+        file_chooser_info.value.set_files(str(image_file))
+    
+        # 上传完成以页面的加载提示消失为准，不额外引入固定 sleep。
+&gt;       expect(self.loading_text).to_be_hidden(timeout=60_000)
+E       AssertionError: Locator expected to be hidden
+E       Actual value: None
+E       Error: strict mode violation: get_by_text("加载中", exact=True) resolved to 2 elements:
+E           1) &lt;div class="b-loading-component__tip"&gt;加载中&lt;/div&gt; aka locator("#editor-container").get_by_text("加载中")
+E           2) &lt;div class="b-loading-component__tip"&gt;加载中&lt;/div&gt; aka get_by_text("加载中").nth(1)
+E        
+E       Call log:
+E         - Expect "to_be_hidden" with timeout 60000ms
+E         - waiting for get_by_text("加载中", exact=True)
+
+autoui\platforms\web\pages\editor_page.py:146: AssertionError</failure></testcase></testsuite></testsuites>

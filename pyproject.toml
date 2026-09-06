@@ -5,7 +5,6 @@ testpaths = ["tests"]
 addopts = "--browser chromium --screenshot only-on-failure --tracing retain-on-failure --headed"
 
 markers = [
-    "case_data(domain, scenario): 加载 YAML 数据",
     "smoke: 冒烟测试",
     "regression: 回归测试",
     "requires_login: 此测试需要账号密码凭据"

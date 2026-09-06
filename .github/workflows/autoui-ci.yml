@@ -13,6 +13,10 @@ jobs:
   regression:
     # 使用 GitHub 提供的一次性 Ubuntu runner，保证每次从干净环境开始。
     runs-on: ubuntu-latest
+    env:
+      # 安装和执行必须共享同一浏览器目录；本地也遵循仓库内目录约定。
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.playwright-browsers
+      DESIGNKIT_STORAGE_STATE: ${{ github.workspace }}/.auth/designkit-cn-release.json
 
     steps:
       # 拉取当前提交的仓库内容，后续步骤都在该工作区执行。
@@ -27,23 +31,49 @@ jobs:
           # 使用 requirements.txt 的 hash 缓存 pip 下载内容，减少重复安装时间。
           cache: pip
 
+      # Allure Report 3 由 Node CLI 生成，版本由 package-lock.json 固定。
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
       # 安装项目运行所需的 Python 依赖。
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      - name: Install Allure Report 3
+        run: npm ci
+
       # GitHub runner 默认不保证存在 Playwright 对应版本的 Chromium。
       # --with-deps 同时安装 Ubuntu 上启动浏览器需要的系统依赖。
       - name: Install Chromium and Linux dependencies
         run: python -m playwright install --with-deps chromium
 
-      # 执行并行回归，并生成测试结果与浏览器失败证据。
+      # 当前真实回归需要会员登录态。Secret 保存 storage state 文件的 Base64 内容。
+      - name: Restore DesignKit authentication state
+        shell: bash
+        env:
+          STORAGE_STATE_B64: ${{ secrets.DESIGNKIT_STORAGE_STATE_B64 }}
+        run: |
+          if [ -z "$STORAGE_STATE_B64" ]; then
+            echo "::error::Missing DESIGNKIT_STORAGE_STATE_B64 GitHub Secret"
+            exit 1
+          fi
+          mkdir -p .auth
+          printf '%s' "$STORAGE_STATE_B64" | base64 --decode > "$DESIGNKIT_STORAGE_STATE"
+
+      # 由 Allure 3 启动并行回归，同时捕获进程输出、生成报告并透传 pytest 退出码。
       # 不设置 continue-on-error，确保测试失败会让 workflow 失败。
       # playwright 目录由 pytest-playwright 管理，Allure 和 JUnit 使用独立路径，
       # 避免 pytest-playwright 清理 output 目录时删除其他报告产物。
-      - name: Run parallel regression
+      - name: Run parallel regression and generate Allure report
         run: >-
+          npx allure run
+          --output artifacts/allure-report
+          --
           python -m pytest
           --strict-markers
           -n 2
@@ -58,7 +88,7 @@ jobs:
       # always() 只保证上传步骤执行，不会覆盖上一步 pytest 的失败状态。
       - name: Upload test artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: autoui-test-artifacts
           path: artifacts

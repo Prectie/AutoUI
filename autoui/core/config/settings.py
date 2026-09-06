@@ -39,11 +39,15 @@ class Settings:
     供 pytest fixture、Playwright 浏览器配置以及页面对象使用。
 
     属性：
+        site: 当前测试产品站点，例如 cn、com 或 zawa。
+        deployment: 当前部署环境，例如 pre、beta 或 release。
         base_url: 测试站点的基础 URL。
         viewport: 浏览器视口配置。
         locale: 浏览器使用的语言区域。
         timezone_id: 浏览器使用的时区。
     """
+    site: str
+    deployment: str
     base_url: str
     viewport: Viewport
     locale: str
@@ -103,7 +107,14 @@ def build_settings(profile: dict) -> Settings:
         如果 viewport 内部缺少 width 或 height，会抛出对应的 KeyError。
     """
     # Settings 对象必须具备的顶层配置字段。
-    required_fields = ("base_url", "viewport", "locale", "timezone_id")
+    required_fields = (
+        "site",
+        "deployment",
+        "base_url",
+        "viewport",
+        "locale",
+        "timezone_id",
+    )
 
     # 找出配置中缺失的必填字段。
     missing_fields = [
@@ -121,6 +132,8 @@ def build_settings(profile: dict) -> Settings:
 
     # 将普通字典转换成类型明确且不可变的 Settings 对象
     return Settings(
+        site=profile["site"],
+        deployment=profile["deployment"],
         base_url=profile["base_url"],
         viewport=Viewport(
             width=viewport["width"],
@@ -131,10 +144,10 @@ def build_settings(profile: dict) -> Settings:
     )
 
 def resolve_settings(
-    cli_site: str | None=None,
-    cli_env: str | None=None,
-    cli_base_url: str | None=None,
-):
+    cli_site: str | None = None,
+    cli_env: str | None = None,
+    cli_base_url: str | None = None,
+) -> Settings:
     """
     根据默认配置、站点环境配置和命令行参数解析最终配置。
 
@@ -191,7 +204,9 @@ def resolve_settings(
     config = {
         **defaults,
         **target,
-        "base_url": base_url
+        "site": site,
+        "deployment": environment,
+        "base_url": base_url,
     }
 
     # 对合并后的配置进行字段校验，并转换成 Settings 对象
