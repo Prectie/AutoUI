@@ -1,5 +1,5 @@
 site: cn
-environment: pre
+environment: release
 
 viewport:
   width: 1920

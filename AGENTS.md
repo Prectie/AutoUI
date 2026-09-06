@@ -68,3 +68,17 @@ Docstring 应根据实际情况说明：
 - 优先使用以下命令形式执行验证：
   - `.venv\\Scripts\\python.exe -m pytest ...`
   - `.venv\\Scripts\\python.exe -m playwright ...`
+
+## Agent skills
+
+### Issue tracker
+
+本仓库的 Issues 和规格说明（specs）均记录在 GitHub Issues 中。请使用 `gh` CLI 执行相关操作。详见 `docs/agents/issue-tracker.md`。
+
+### Triage labels
+
+本仓库使用默认的 triage labels：`needs-triage`、`needs-info`、`ready-for-agent`、`ready-for-human`、`wontfix`。详见 `docs/agents/triage-labels.md`。
+
+### Domain docs
+
+本仓库采用 single-context 领域文档布局。详见 `docs/agents/domain.md`。

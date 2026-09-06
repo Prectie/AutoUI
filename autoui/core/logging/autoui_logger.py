@@ -4,7 +4,7 @@ AutoUI 结构化日志门面。
 本模块只负责构造 AutoUI 统一的结构化事件，
 不负责创建 logger、不负责文件写入，也不依赖 pytest、Playwright 或具体 Page Object。
 
-底层 logger 的创建、handler 配置和 JSONL 输出由 pytest fixture 与 nb_log 负责。
+底层 logger 的创建、handler 配置和 JSONL 输出由 pytest fixture 配置的标准 logging 负责。
 """
 
 import logging
@@ -12,9 +12,17 @@ import uuid
 from collections.abc import Mapping
 from contextlib import contextmanager
 from time import perf_counter
+from types import TracebackType
 from typing import Any, Iterator
 
 from autoui.core.runtime import ExecutionIdentity
+
+
+ExcInfo = tuple[
+    type[BaseException],
+    BaseException,
+    TracebackType | None,
+]
 
 
 class AutoUILogger:
@@ -24,7 +32,7 @@ class AutoUILogger:
     参数：
         logger:
             由外部提供的标准 logging.Logger。
-            当前计划中由 nb_log 创建，负责实际的日志输出。
+            由 pytest fixture 创建并配置，负责实际的日志输出。
 
         identity:
             当前 pytest 测试项的 ExecutionIdentity。
@@ -64,9 +72,12 @@ class AutoUILogger:
         phase: str,
         message: str,
         data: Mapping[str, Any] | None = None,
-        operation_id: str | None = None,
+        step_id: str | None = None,
+        duration_ms: float | None = None,
+        error_type: str | None = None,
+        error_message: str | None = None,
         level: int = logging.INFO,
-        exc_info: bool = False
+        exc_info: bool | ExcInfo = False
     ) -> None:
         """
         写入一条结构化测试事件。
@@ -88,10 +99,22 @@ class AutoUILogger:
                 当前事件关联的业务或技术数据。
                 数据应当由字符串、数字、布尔值、列表和字典等 JSON 友好的对象组成。
 
-            operation_id:
+            step_id:
                 同一次操作的关联标识。
                 started、finished 和 failed 事件应当共享同一个值。
                 独立生命周期事件可以不传入该参数。
+
+            duration_ms:
+                当前阶段对应的耗时，单位为毫秒。
+                通常只在 finished 或 failed 事件中填写。
+
+            error_type:
+                失败事件的异常类型名称。
+                非失败事件保持为 None。
+
+            error_message:
+                失败事件的异常消息。
+                非失败事件保持为 None。
 
             level:
                 Python logging 日志级别。
@@ -99,8 +122,9 @@ class AutoUILogger:
                 失败事件通常使用 logging.ERROR。
 
             exc_info:
-                是否记录当前异常的 traceback。
-                只有在异常处理分支中才应传入 True。
+                是否记录异常 traceback。
+                False 表示不记录，True 表示使用当前处理中的异常；
+                pytest 的 CallInfo 异常也可以直接传入其异常三元组。
 
         异常：
             ValueError:
@@ -125,13 +149,13 @@ class AutoUILogger:
             "testrun_uid": self._identity.testrun_uid,
             "worker_id": self._identity.worker_id,
             "nodeid": self._identity.nodeid,
+            "step_id": step_id,
+            # data 只承载业务或技术上下文；耗时和异常属于事件协议字段。
+            "data": dict(data) if data is not None else {},
+            "duration_ms": duration_ms,
+            "error_type": error_type,
+            "error_message": error_message,
         }
-
-        if operation_id is not None:
-            event["operation_id"] = operation_id
-
-        if data is not None:
-            event["data"] = dict(data)
 
         # 使用 autoui_event 作为 AutoUI 事件载体，避免自定义字段直接覆盖 LogRecord 的内置属性。
         # JSON formatter 后续负责读取该字段并序列化。
@@ -148,7 +172,7 @@ class AutoUILogger:
         message: str,
         *,
         event_type: str = "operation",
-        data: Mapping[str, Any] | None = None
+        data: Mapping[str, Any] | None = None,
     ) -> Iterator[None]:
         """
         自动记录一次操作的开始、成功或失败。
@@ -178,7 +202,7 @@ class AutoUILogger:
         """
         # 同一次操作的所有阶段共享同一份关联 ID，
         # 这样平台才能把 started、finished 和 failed 合并展示。
-        operation_id = uuid.uuid4().hex
+        step_id = uuid.uuid4().hex
 
         # 复制基础数据，让三个阶段拥有一致的上下文。
         base_data = dict(data) if data is not None else {}
@@ -191,7 +215,7 @@ class AutoUILogger:
             phase="started",
             message=message,
             data=base_data,
-            operation_id=operation_id,
+            step_id=step_id,
             level=logging.INFO
         )
 
@@ -199,23 +223,22 @@ class AutoUILogger:
             # 进入 with 代码块，执行真正的 Playwright 操作。
             yield
         except Exception as exc:
-            # 失败事件保留原始操作数据，同时补充耗时和异常信息。
-            failed_data = {
-                **base_data,
-                "duration_ms": round(
-                    (perf_counter() - started_at) * 1000,
-                    2
-                ),
-                "error_type": type(exc).__name__,
-                "error_message": str(exc)
-            }
+            # 失败事件保留原始操作数据；耗时和异常写入协议顶层字段，
+            # 便于平台直接筛选失败原因和聚合耗时。
+            duration_ms = round(
+                (perf_counter() - started_at) * 1000,
+                2
+            )
 
             self.emit(
                 event_type=event_type,
                 phase="failed",
                 message=message,
-                data=failed_data,
-                operation_id=operation_id,
+                data=base_data,
+                step_id=step_id,
+                duration_ms=duration_ms,
+                error_type=type(exc).__name__,
+                error_message=str(exc),
                 level=logging.ERROR,
                 exc_info=True
             )
@@ -226,20 +249,18 @@ class AutoUILogger:
         else:
             # 只有 with 代码块没有异常结束，
             # 才能记录 finished。
-            finished_data = {
-                **base_data,
-                "duration_ms": round(
-                    (perf_counter() - started_at) * 1000,
-                    2
-                ),
-            }
+            duration_ms = round(
+                (perf_counter() - started_at) * 1000,
+                2
+            )
 
             self.emit(
                 event_type=event_type,
                 phase="finished",
                 message=message,
-                data=finished_data,
-                operation_id=operation_id,
+                data=base_data,
+                step_id=step_id,
+                duration_ms=duration_ms,
                 level=logging.INFO,
             )
 

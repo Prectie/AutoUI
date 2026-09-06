@@ -4,6 +4,8 @@ import re
 
 from playwright.sync_api import Locator, Page, expect
 
+from autoui.platforms.web.steps import WebStepRuntime, business_step
+
 
 class BaiduPage:
     """封装百度首页搜索流程。
@@ -14,8 +16,23 @@ class BaiduPage:
 
     BASE_URL = "https://www.baidu.com/"
 
-    def __init__(self, page: Page) -> None:
+    def __init__(
+        self,
+        page: Page,
+        web_step_runtime: WebStepRuntime
+    ) -> None:
+        """
+            创建百度页面对象。
+
+            参数：
+                page:
+                    当前测试项独立 BrowserContext 提供的页面。
+
+                web_step_runtime:
+                    当前测试项注入的业务步骤运行时。
+            """
         self.page = page
+        self._web_step_runtime = web_step_runtime
 
     @property
     def search_input(self) -> Locator:
@@ -42,20 +59,20 @@ class BaiduPage:
         """打开百度首页。"""
         self.page.goto(self.BASE_URL)
 
+    @business_step("百度搜索：{keyword}")
     def search(self, keyword: str) -> None:
         """输入关键词并提交搜索。
 
         参数：
             keyword:
-                要搜索的非空文本。关键词会被记录到 Locator.fill 的技术日志中，
-                便于回放本次测试实际输入了什么。
+                要搜索的非空文本。
+                该值由 business_step 记录到当前测试项 JSONL 的 data.keyword 字段。
         """
         if not keyword.strip():
             raise ValueError("搜索关键词不能为空")
 
         self.search_input.fill(keyword)
-        with self.page.expect_navigation(wait_until="domcontentloaded"):
-            self.search_button.click()
+        self.search_button.click()
 
     def assert_results_contain(self, keyword: str) -> None:
         """断言至少有一个搜索结果标题包含关键词。"""
